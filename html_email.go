@@ -28,10 +28,10 @@ func CreateHtmlEmail(subject string, content interface{}, template *template.Tem
 }
 
 // Generate the body of the message from the given content and template
-func (e *HtmlEmail) Body() ([]byte, error) {
+func (e *HtmlEmail) Body() (string, error) {
 	var buffer bytes.Buffer
 	err := e.template.ExecuteTemplate(&buffer, "Body", e.content)
-	return buffer.Bytes(), err
+	return buffer.String(), err
 }
 
 // Returns "text/html"

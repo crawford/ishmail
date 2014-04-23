@@ -32,7 +32,7 @@ type Emailer interface {
 	To() []*mail.Address
 	Subject() string
 	ContentType() string
-	Body() ([]byte, error)
+	Body() (string, error)
 	Date() time.Time
 }
 
@@ -52,17 +52,17 @@ func Send(email Emailer, auth smtp.Auth, addr string) error {
 	if err != nil {
 		return err
 	}
-	message := append(headersToBytes(headers), body...)
+	message := []byte(headersToString(headers) + body)
 
 	return smtp.SendMail(addr, auth, email.From().Address, addrsToAddress(email.To()), message)
 }
 
-func headersToBytes(headers map[string]string) []byte {
+func headersToString(headers map[string]string) string {
 	str := ""
 	for k, v := range headers {
 		str += fmt.Sprintf("%s: %s\r\n", k, v)
 	}
-	return []byte(str)
+	return str
 }
 
 func addrsToAddress(addrs []*mail.Address) []string {
