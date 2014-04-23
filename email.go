@@ -70,7 +70,7 @@ func Send(email Emailer, auth smtp.Auth, addr string) error {
 	}
 	message := []byte(headersToString(headers) + body)
 
-	return smtp.SendMail(addr, auth, email.From().Address, addrsToAddress(email.To()), message)
+	return smtp.SendMail(addr, auth, email.From().Address, addrsToAddresses(email.To()), message)
 }
 
 func headersToString(headers map[string]string) string {
@@ -81,7 +81,7 @@ func headersToString(headers map[string]string) string {
 	return str
 }
 
-func addrsToAddress(addrs []*mail.Address) []string {
+func addrsToAddresses(addrs []*mail.Address) []string {
 	out := make([]string, 0)
 	for _, addr := range addrs {
 		out = append(out, addr.Address)
@@ -91,8 +91,12 @@ func addrsToAddress(addrs []*mail.Address) []string {
 
 func addrsToString(addrs []*mail.Address) string {
 	out := ""
+	if len(addrs) > 0 {
+		out += addrs[0].String()
+		addrs = addrs[1:]
+	}
 	for _, addr := range addrs {
-		out += addr.String() + ", "
+		out += ", " + addr.String()
 	}
 	return out
 }
