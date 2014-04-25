@@ -17,6 +17,7 @@ limitations under the License.
 package ishmail
 
 import (
+	"errors"
 	"fmt"
 	"net/mail"
 	"net/smtp"
@@ -55,6 +56,26 @@ type Emailer interface {
 // Send an email with the specified authentication to a host.
 // This will not properly escape all of the fields or the message body.
 func Send(email Emailer, auth smtp.Auth, addr string) error {
+	message, err := generateMessage(email)
+	if err != nil {
+		return err
+	}
+	return smtp.SendMail(addr, auth, email.From().Address, addrsToAddresses(email.To()), message)
+}
+
+func generateMessage(email Emailer) ([]byte, error) {
+	if email == nil {
+		return nil, errors.New("Email must not be nil")
+	}
+
+	if email.From() == nil {
+		return nil, errors.New("From must not be nil")
+	}
+
+	if email.To() == nil {
+		return nil, errors.New("To must not be nil")
+	}
+
 	headers := map[string]string{
 		"From":         email.From().String(),
 		"To":           addrsToString(email.To()),
@@ -66,11 +87,9 @@ func Send(email Emailer, auth smtp.Auth, addr string) error {
 
 	body, err := email.Body()
 	if err != nil {
-		return err
+		return nil, err
 	}
-	message := []byte(headersToString(headers) + body)
-
-	return smtp.SendMail(addr, auth, email.From().Address, addrsToAddresses(email.To()), message)
+	return []byte(headersToString(headers) + body), nil
 }
 
 func headersToString(headers map[string]string) string {
@@ -78,7 +97,7 @@ func headersToString(headers map[string]string) string {
 	for k, v := range headers {
 		str += fmt.Sprintf("%s: %s\r\n", k, v)
 	}
-	return str
+	return str + "\r\n"
 }
 
 func addrsToAddresses(addrs []*mail.Address) []string {
